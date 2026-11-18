@@ -1,0 +1,14 @@
+services:
+  testdb:
+    image: pgvector/pgvector:pg17
+    container_name: akm-testdb
+    environment:
+      POSTGRES_USER: akm
+      POSTGRES_PASSWORD: akm
+      POSTGRES_DB: akm_test
+    ports:
+      - '5433:5432'
+    volumes:
+      - akm-testdb-data:/var/lib/postgresql/data
+volumes:
+  akm-testdb-data:

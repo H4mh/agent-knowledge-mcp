@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "team-knowledge": {
+      "type": "http",
+      "url": "http://your-akm-server:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer <先填你的身份名（如 zhangsan）完成首次注册；随后把首次调用响应中的 identity_token 换到这里并重启会话>"
+      }
+    }
+  }
+}

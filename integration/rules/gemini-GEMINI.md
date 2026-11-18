@@ -1,0 +1,13 @@
+## 团队知识库（agent-knowledge-mcp）使用约束
+
+本项目接入了团队知识库 MCP 服务，包含 9 个工具：`search_knowledge`（检索）、`save_knowledge`（上传）、`update_knowledge`（补充修正）、`mark_used`（标记帮到了我）、`get_context`（模块注意事项），以及 Skill 共享的 4 个工具：`save_skill`（上传 skill）、`search_skills`（检索 skill）、`get_skill`（获取 skill 及安装指引）、`update_skill`（修正 skill）。
+
+**必须遵守：**
+
+0. **身份自配置（首次使用前确认一次）**：知识库按身份令牌记账，身份名只用于首次注册。检查本项目的 MCP 配置中 team-knowledge 的 `Authorization` header——若仍是占位符或缺失：身份名优先取 `git config user.email` 的 `@` 前缀（非 ASCII 时改用 `git config user.name` 转写为拼音）写入 MCP 配置，提醒用户重启会话；首次调用完成注册后，从响应取出 `identity_token` 写回 `Authorization: Bearer <token>` 并再次提醒重启（**令牌只显示这一次，丢失需管理员 reset-token**）。同名身份先到先得：若返回 401 且怀疑重名，在名字后追加机器名后缀再试。
+1. **开工先查上下文**：接到开发任务后、动手写代码前，调用 `get_context`（scope 用本项目注册的 scope 名，module 传相关模块路径），了解该模块的已知注意事项。
+2. **排查问题先检索**：遇到构建失败、依赖冲突、环境报错、启动异常、不熟悉的模块行为时，先调用 `search_knowledge` 检索是否已有相关经验，再开始排查。避免重复踩坑。
+3. **解决后必须沉淀**：你解决了一个非琐碎的问题（构建/依赖/环境/框架行为/数据方言相关），且这个问题其他人可能再遇到，调用 `save_knowledge` 上传：写清问题现象、结论、验证方法；`scope` 用本项目的 git 仓库名（`git remote get-url origin` 末段去掉 `.git`），跨项目通用用 `global`，未注册的 scope 会在首次保存时自动注册；**不要上传业务敏感数据、密钥、大段业务代码**，知识库写"结论"不写"过程流水账"。
+4. **有帮助就标记**：某条已有知识确实帮到了你，调用 `mark_used` 标记，帮助它积累可信度。
+5. **命中相似条目不新建**：`save_knowledge` 响应中列出相似条目且为同一问题时，改用 `update_knowledge` 补充信息，不要重复新建。
+6. **优先复用现成 skill**：接到开发任务后，除 get_context 外先调 search_skills 检索有无可用 skill；命中则 get_skill 按返回的 install 指引安装到本地 skills 目录再使用，没有才自行解决；打磨好的做法调用 save_skill 上传共享。

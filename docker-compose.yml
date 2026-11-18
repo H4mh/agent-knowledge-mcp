@@ -1,0 +1,45 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: akm-db
+    environment:
+      POSTGRES_USER: akm
+      POSTGRES_PASSWORD: ${AKM_DB_PASSWORD:?请设置 AKM_DB_PASSWORD}
+      POSTGRES_DB: akm
+    volumes:
+      - akm-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U akm -d akm']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    container_name: akm-app
+    depends_on:
+      db:
+        condition: service_healthy
+    # host.docker.internal → 宿主机：向量服务跑在宿主机（如本机 Ollama 经反向隧道）时，
+    # AKM_EMBEDDING_URL 用 http://host.docker.internal:<port>/...
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      DATABASE_URL: postgres://akm:${AKM_DB_PASSWORD}@db:5432/akm
+      PORT: '3000'
+      AKM_JOIN_SECRET: ${AKM_JOIN_SECRET:-}
+      AKM_SCOPE_OPEN: ${AKM_SCOPE_OPEN:-}
+      # 向量检索（可选）：协议 openai | ollama | generic，未配置则不启用
+      AKM_EMBEDDING_PROTOCOL: ${AKM_EMBEDDING_PROTOCOL:-}
+      AKM_EMBEDDING_URL: ${AKM_EMBEDDING_URL:-}
+      AKM_EMBEDDING_MODEL: ${AKM_EMBEDDING_MODEL:-}
+      AKM_EMBEDDING_API_KEY: ${AKM_EMBEDDING_API_KEY:-}
+      AKM_EMBEDDING_TIMEOUT_MS: ${AKM_EMBEDDING_TIMEOUT_MS:-}
+      AKM_EMBEDDING_BODY_TEMPLATE: ${AKM_EMBEDDING_BODY_TEMPLATE:-}
+      AKM_EMBEDDING_RESPONSE_PATH: ${AKM_EMBEDDING_RESPONSE_PATH:-}
+    ports:
+      - '${AKM_APP_PORT:-3000}:3000'
+    restart: unless-stopped
+
+volumes:
+  akm-db-data:
